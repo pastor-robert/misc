@@ -1,0 +1,26 @@
+#!/usr/bin/python
+
+import sys
+
+def read_input(input_file):
+    with open(input_file) as input_file:
+        for line in input_file:
+            yield map(int, line.split())
+
+def compute_output(a,b,n):
+    result = []
+    for i in range(1, n+1):
+       iresult = ''
+       if i%a == 0:
+           iresult += 'F'
+       if i%b == 0:
+           iresult += 'B'
+       result.append(iresult or str(i))
+    return result
+
+def main():
+    for input_file in sys.argv[1:]:
+        for a,b,n in read_input(input_file):
+            print ' '.join(compute_output(a,b,n))
+
+main()

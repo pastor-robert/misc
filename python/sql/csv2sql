@@ -1,0 +1,50 @@
+#!/usr/bin/env python2
+
+import sqlite3
+import csv
+
+
+def quotify(s):
+    return '"' + s.strip().replace('"', '""') + '"'
+
+con = sqlite3.connect("pets.db")
+
+# Examle contents of pets.csv:
+# person_name, person_age, pet_name
+# Lisa, 8, Snowball I
+# Lisa, 8, Snowball II
+# Bart, 10, Santa's Little Helper
+with open("pets.csv") as pets:
+    pets = csv.reader(pets)
+    with con:
+        names = next(pets)
+        names = [name.decode('utf-8') for name in names]
+        for name in names:
+            con.execute('drop table if exists %s;' % quotify(name))
+            con.execute('create table %s (value unique on conflict ignore);'
+                        % quotify(name))
+        con.execute("drop table if exists master")
+        st = "create table master(%s);" % (
+            ','.join("%s" % quotify(name) for name in names))
+        con.execute(st)
+        for row in pets:
+            row = [item.decode('utf-8') for item in row]
+            rowids = []
+            for name, value in zip(names, row):
+                rowids.append(
+                    con.execute("insert into %s (value) values(?)"
+                                % quotify(name),
+                                (value.strip(),)).lastrowid)
+            st = 'insert into master values(%s)' % (
+                ','.join('?' for rowid in rowids))
+            con.execute(st, rowids)
+
+# Demonstration, using Simpon's example from question:
+from pprint import pprint
+st = '''select person_name.value, person_age.value, pet_name.value
+          from person_name, person_age, pet_name, master
+         where master.person_name = person_name.rowid
+           and master.person_age = person_age.rowid
+           and master.pet_name = pet_name.rowid;'''
+
+pprint(con.execute(st).fetchall())

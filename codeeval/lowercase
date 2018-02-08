@@ -1,0 +1,12 @@
+#!/usr/bin/python
+
+import sys
+
+def main():
+  for input_file in sys.argv[1:]:
+    with open(input_file) as input_file:
+      for line in input_file:
+        sys.stdout.write(line.lower())
+
+main()
+          
